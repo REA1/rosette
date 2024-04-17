@@ -83,7 +83,15 @@
     [_ (error 'enc "expected a boolean?, integer?, real?, or bitvector?, given ~a" v)]))
 
 (define-syntax-rule (enc-real v)
-  (if (exact? v) ($/ (numerator v) (denominator v)) (string->symbol (~r v))))
+  (let* ([v+ (abs v)]
+         [v+-enc
+          (if (exact? v)
+              ($/ (numerator v+) (denominator v+))
+              (string->symbol (~r v+)))])
+    (if (< v 0)
+        ($- v+-enc)
+        v+-enc)))
+
 (define-syntax-rule (enc-integer v)
   (let ([v* (inexact->exact v)])
     (if (< v* 0) ($- (abs v*)) v*)))
