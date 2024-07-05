@@ -2,6 +2,7 @@
 
 (require rackunit rackunit/text-ui  "common.rkt" "solver.rkt" 
          rosette/solver/smt/z3
+         rosette/solver/smt/cvc5
          rosette/solver/solution 
          rosette/lib/roseunit 
          rosette/base/core/term rosette/base/core/bool
@@ -256,6 +257,13 @@
   (parameterize ([solver (z3  #:options (hash ':pp.decimal 'true ':pp.decimal-precision 15))])
     (check-= (abs ((solve (@= (@* xr xr) 2)) xr)) (abs (sqrt 2)) 1e-15)
     (solver-shutdown (solver))))
+
+(define (check-negative-real)
+  (when (cvc5-available?)
+    (parameterize ([solver (cvc5)])
+      (define-symbolic x @real?)
+      (check-pred sat? (solve (@= (@/ 1 -2.0) x)))
+      (solver-shutdown (solver)))))
   
 (define (check-division-simplifications div x y z [epsilon 0])
   (check-valid? (div 0 x) 0)
@@ -570,6 +578,7 @@
   (test-suite+
    "Tests for / in rosette/base/real.rkt"
    #:features '(qf_nia qf_nra)
+   (check-negative-real)
    (check-division-simplifications @/ xr yr zr (/ 2 10))
    (check-semantics @/ xr yr zr (lambda (x) (not (zero? x))))
    ))
